@@ -1,0 +1,9 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // El acceso es solo vía Admin SDK desde la API.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
