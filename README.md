@@ -1,5 +1,7 @@
 # 27 · Buscador de libros · API
 
+**Desplegada en:** https://27-buscador-de-libros-api.vercel.app (estado: `/api/health`)
+
 API en Next.js (Route Handlers, runtime Node) con Firebase Auth + Firestore (solo Admin SDK), desplegable en Vercel. La app móvil está en el repositorio `27-buscador-de-libros-app`.
 
 ## Endpoints
