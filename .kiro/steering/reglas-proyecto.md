@@ -34,7 +34,7 @@ Next.js (App Router, Route Handlers, `runtime = "nodejs"`) · TypeScript estrict
 
 ## No
 
-- No leer, imprimir, copiar ni crear `.env*`, claves, keystores ni credenciales (solo `.env.example`).
+- No leer, imprimir, copiar ni crear `.env*`, claves, keystores ni credenciales (solo `env.example`).
 - No salir de la carpeta de este repositorio.
 - No registrar contraseñas, tokens ni datos personales en logs.
 - No usar `any`, `console.log` ni `@ts-ignore`.

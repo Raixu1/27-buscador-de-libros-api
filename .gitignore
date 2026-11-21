@@ -8,7 +8,6 @@ next-env.d.ts
 # Secretos: nunca en Git
 .env
 .env.*
-!.env.example
 *.pem
 *.key
 *serviceAccount*.json
@@ -16,3 +15,4 @@ next-env.d.ts
 
 # Reportes de cobertura
 coverage/
+

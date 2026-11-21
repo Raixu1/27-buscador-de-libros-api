@@ -21,7 +21,7 @@ Errores: `{ "error": "...", "detalles"?: [...] }`. Fallos del servicio externo: 
 
 ## Variables de entorno (solo en Vercel; nunca en Git)
 
-`FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` (con `\n` literales), `FIREBASE_WEB_API_KEY`. Plantilla en `.env.example`.
+`FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` (con `\n` literales), `FIREBASE_WEB_API_KEY`. Plantilla en `env.example`.
 
 ## Desarrollo
 
