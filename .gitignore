@@ -1,0 +1,15 @@
+node_modules
+.next
+.vercel
+out
+*.tsbuildinfo
+next-env.d.ts
+
+# Secretos: nunca en Git
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*serviceAccount*.json
+*firebase-adminsdk*.json
