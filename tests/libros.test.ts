@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { normalizeIsbn } from "@/lib/isbn";
-import { normalizeDoc } from "@/lib/openlibrary";
+import { extractDescription, normalizeDoc } from "@/lib/openlibrary";
 
 vi.mock("@/lib/firebase", () => import("./helpers/fakeFirebase"));
 
 const { GET: buscar } = await import("@/app/api/libros/buscar/route");
 const { GET: porIsbn } = await import("@/app/api/libros/isbn/[isbn]/route");
+const { GET: detalle } = await import("@/app/api/libros/detalle/[id]/route");
 
 const req = (url: string) => new Request(url, { headers: { authorization: "Bearer token-a" } });
 
@@ -79,6 +80,21 @@ describe("ISBN", () => {
   it("rechaza dígito de control incorrecto o formato inválido", () => {
     expect(normalizeIsbn("9780306406158")).toBeNull();
     expect(normalizeIsbn("abc")).toBeNull();
+  });
+});
+
+describe("sinopsis", () => {
+  it("acepta descripción como texto o como { value } y la recorta", () => {
+    expect(extractDescription("  Hola ")).toBe("Hola");
+    expect(extractDescription({ type: "/type/text", value: "Mundo" })).toBe("Mundo");
+    expect(extractDescription("x".repeat(3000))).toHaveLength(2000);
+    expect(extractDescription(undefined)).toBeNull();
+  });
+
+  it("devuelve solo id y descripcion", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ description: "Una novela", otros: [1, 2] })));
+    const res = await detalle(req("http://x"), { params: Promise.resolve({ id: "OL45883W" }) });
+    expect(await res.json()).toEqual({ id: "OL45883W", descripcion: "Una novela" });
   });
 });
 

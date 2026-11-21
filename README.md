@@ -10,6 +10,7 @@ API en Next.js (Route Handlers, runtime Node) con Firebase Auth + Firestore (sol
 | `POST /api/auth/registro` · `login` · `refresh` · `GET /api/auth/yo` | Autenticación mediada por la API (Firebase Auth REST) |
 | `GET /api/lectura?since=` · `PUT/DELETE /api/lectura/:id` | Sincronización de la lista de lectura (borrado lógico, máx. 500) |
 | `GET /api/libros/buscar?q=&pagina=` · `GET /api/libros/isbn/:isbn` | Proxy a Open Library (timeout 5 s, solo campos usados) |
+| `GET /api/libros/detalle/:id` | Sinopsis de una obra (extensión: la usa la vista previa por pulsación larga) |
 
 Todas las rutas salvo `health` y `auth/*` exigen `Authorization: Bearer <ID token>`.
 Errores: `{ "error": "...", "detalles"?: [...] }`. Fallos del servicio externo: 502/504.

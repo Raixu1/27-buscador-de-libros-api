@@ -57,6 +57,29 @@ async function fetchSearch(params: Record<string, string>) {
   return { resultados, total };
 }
 
+/** La sinopsis puede venir como texto o como { value }. Se recorta a 2000 caracteres. */
+export function extractDescription(raw: unknown): string | null {
+  const text =
+    typeof raw === "string" ? raw : raw && typeof raw === "object" ? (raw as { value?: unknown }).value : null;
+  return typeof text === "string" && text.trim() ? text.trim().slice(0, 2000) : null;
+}
+
+export async function obtenerSinopsis(id: string): Promise<{ id: string; descripcion: string | null }> {
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}/works/${encodeURIComponent(id)}.json`, {
+      signal: AbortSignal.timeout(5000),
+      headers: { "User-Agent": "buscador-de-libros-api (proyecto academico)" },
+    });
+  } catch {
+    throw new HttpError(504, "El servicio de libros no responde");
+  }
+  if (res.status === 404) throw new HttpError(404, "Libro no encontrado");
+  if (!res.ok) throw new HttpError(502, "El servicio de libros falló");
+  const data = (await res.json().catch(() => null)) as { description?: unknown } | null;
+  return { id, descripcion: extractDescription(data?.description) };
+}
+
 export async function buscarLibros(q: string, pagina: number) {
   const { resultados, total } = await fetchSearch({ q, page: String(pagina) });
   return { resultados, total, pagina, hay_mas: pagina * PAGE_SIZE < total };
