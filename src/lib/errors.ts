@@ -36,7 +36,7 @@ export function route<C = unknown>(handler: Handler<C>): Handler<C> {
         return NextResponse.json(errorBody("Datos inválidos", zodDetalles(err)), { status: 400 });
       }
       // Solo el nombre del error: nunca mensajes que puedan contener datos personales.
-      console.error("Error interno:", err instanceof Error ? err.name : "desconocido");
+      process.stderr.write(`Error interno: ${err instanceof Error ? err.name : "desconocido"}\n`);
       return NextResponse.json(errorBody("Error interno"), { status: 500 });
     }
   };

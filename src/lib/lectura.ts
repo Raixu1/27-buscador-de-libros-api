@@ -9,46 +9,48 @@ export function parseId(id: string): string {
   return id;
 }
 
+const camposLectura = z.object({
+  titulo: z.string().trim().min(1).max(300),
+  autores: z.array(z.string().trim().min(1).max(200)).max(20),
+  portada_url: z
+    .url({ protocol: /^https$/ })
+    .max(500)
+    .nullable()
+    .default(null),
+  anio: z.number().int().min(0).max(3000).nullable().default(null),
+  estado: z.enum(["quiero", "leyendo", "leido"]),
+  calificacion: z.number().int().min(1).max(5).nullable().default(null),
+  nota: z.string().max(2000).nullable().default(null),
+});
+
 /** Solo estos campos se guardan; el resto se descarta. */
-export const lecturaSchema = z
-  .object({
-    titulo: z.string().trim().min(1).max(300),
-    autores: z.array(z.string().trim().min(1).max(200)).max(20),
-    portada_url: z.url({ protocol: /^https$/ }).max(500).nullable().default(null),
-    anio: z.number().int().min(0).max(3000).nullable().default(null),
-    estado: z.enum(["quiero", "leyendo", "leido"]),
-    calificacion: z.number().int().min(1).max(5).nullable().default(null),
-    nota: z.string().max(2000).nullable().default(null),
-  })
-  .refine((v) => v.calificacion === null || v.estado === "leido", {
-    path: ["calificacion"],
-    message: "La calificación solo aplica si el estado es «leido»",
-  });
+export const lecturaSchema = camposLectura.refine((v) => v.calificacion === null || v.estado === "leido", {
+  path: ["calificacion"],
+  message: "La calificación solo aplica si el estado es «leido»",
+});
 
 export type LecturaInput = z.infer<typeof lecturaSchema>;
 
+/** Documento tal como queda en Firestore (campos base puestos por el servidor). */
+const docGuardadoSchema = camposLectura.extend({
+  created_at: z.string(),
+  updated_at: z.string(),
+  deleted_at: z.string().nullable(),
+});
+const metaSchema = z.object({ created_at: z.string().optional(), deleted_at: z.string().nullable().optional() });
+
+export type LecturaDoc = z.infer<typeof docGuardadoSchema> & { id: string };
+
 /** Aislamiento entre usuarios: la ruta contiene el uid del token verificado. */
 export const lecturaCol = (uid: string) => db().collection("usuarios").doc(uid).collection("lectura");
-
-export type LecturaDoc = LecturaInput & {
-  id: string;
-  created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
-};
 
 export async function upsertLectura(uid: string, id: string, input: LecturaInput): Promise<LecturaDoc> {
   const ref = lecturaCol(uid).doc(id);
   const now = new Date().toISOString();
   return db().runTransaction(async (tx) => {
     const snap = await tx.get(ref); // todas las lecturas antes de escribir
-    const prev = snap.exists ? (snap.data() as Partial<LecturaDoc>) : null;
-    const doc = {
-      ...input,
-      created_at: prev?.created_at ?? now,
-      updated_at: now,
-      deleted_at: null,
-    };
+    const prev = metaSchema.safeParse(snap.data() ?? {}).data;
+    const doc = { ...input, created_at: prev?.created_at ?? now, updated_at: now, deleted_at: null };
     tx.set(ref, doc);
     return { id, ...doc };
   });
@@ -59,15 +61,19 @@ export async function borrarLectura(uid: string, id: string): Promise<void> {
   const now = new Date().toISOString();
   await db().runTransaction(async (tx) => {
     const snap = await tx.get(ref);
-    const data = snap.data() as Partial<LecturaDoc> | undefined;
-    if (!snap.exists || data?.deleted_at) throw new HttpError(404, "No existe");
+    const meta = metaSchema.safeParse(snap.data() ?? {}).data;
+    if (!snap.exists || meta?.deleted_at) throw new HttpError(404, "No existe");
     tx.update(ref, { deleted_at: now, updated_at: now });
   });
 }
 
-export async function listarLectura(uid: string, since: string | null) {
+/** Cambios desde `since` (incluye borrados lógicos). Los documentos con forma inválida se omiten. */
+export async function listarLectura(uid: string, since: string | null): Promise<LecturaDoc[]> {
   let query = lecturaCol(uid).orderBy("updated_at");
   if (since) query = query.where("updated_at", ">", since);
   const snap = await query.limit(500).get();
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<LecturaDoc, "id">) }));
+  return snap.docs.flatMap((d) => {
+    const r = docGuardadoSchema.safeParse(d.data());
+    return r.success ? [{ id: d.id, ...r.data }] : [];
+  });
 }

@@ -51,14 +51,19 @@ describe("proxy de Open Library", () => {
       hay_mas: true,
     });
   });
+});
 
+describe("proxy: validación y fallos", () => {
   it("rechaza búsquedas de menos de 3 caracteres (400)", async () => {
     const res = await buscar(req("http://x/api/libros/buscar?q=ab"), undefined);
     expect(res.status).toBe(400);
   });
 
   it("responde 504 si el servicio externo no responde", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => Promise.reject(new Error("timeout"))));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Promise.reject(new Error("timeout"))),
+    );
     const res = await buscar(req("http://x/api/libros/buscar?q=dune"), undefined);
     expect(res.status).toBe(504);
   });
@@ -66,7 +71,10 @@ describe("proxy de Open Library", () => {
   it("valida el ISBN y responde 404 si no hay libro", async () => {
     const ctx = (isbn: string) => ({ params: Promise.resolve({ isbn }) });
     expect((await porIsbn(req("http://x"), ctx("123"))).status).toBe(400);
-    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ numFound: 0, docs: [] })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ numFound: 0, docs: [] })),
+    );
     expect((await porIsbn(req("http://x"), ctx("9780306406157"))).status).toBe(404);
   });
 });
@@ -92,7 +100,10 @@ describe("sinopsis", () => {
   });
 
   it("devuelve solo id y descripcion", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ description: "Una novela", otros: [1, 2] })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ description: "Una novela", otros: [1, 2] })),
+    );
     const res = await detalle(req("http://x"), { params: Promise.resolve({ id: "OL45883W" }) });
     expect(await res.json()).toEqual({ id: "OL45883W", descripcion: "Una novela" });
   });

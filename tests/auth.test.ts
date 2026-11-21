@@ -11,7 +11,11 @@ const { POST: login } = await import("@/app/api/auth/login/route");
 const { GET: yo } = await import("@/app/api/auth/yo/route");
 
 const post = (body: unknown) =>
-  new Request("http://x", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  new Request("http://x", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
 
 beforeEach(() => resetRateLimit());
 
@@ -22,7 +26,10 @@ describe("auth", () => {
   });
 
   it("login limita intentos (429)", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ error: { message: "INVALID_LOGIN_CREDENTIALS" } }, { status: 400 })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({ error: { message: "INVALID_LOGIN_CREDENTIALS" } }, { status: 400 })),
+    );
     let last = 0;
     for (let i = 0; i < 12; i++) last = (await login(post({ email: "a@test.com", password: "x" }), undefined)).status;
     expect(last).toBe(429);
