@@ -24,7 +24,7 @@ type Filter = { field: string; value: unknown };
 function docRef(path: string) {
   return {
     path,
-    id: path.split("/").pop() as string,
+    id: path.split("/").pop() ?? "",
     collection: (name: string) => colRef(`${path}/${name}`),
     get: async () => snapshot(path),
   };
@@ -32,7 +32,7 @@ function docRef(path: string) {
 
 function snapshot(path: string) {
   const data = store.get(path);
-  return { exists: data !== undefined, id: path.split("/").pop() as string, data: () => data };
+  return { exists: data !== undefined, id: path.split("/").pop() ?? "", data: () => data };
 }
 
 function colRef(path: string, filters: Filter[] = [], max = Infinity) {
