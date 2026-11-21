@@ -13,3 +13,6 @@ next-env.d.ts
 *.key
 *serviceAccount*.json
 *firebase-adminsdk*.json
+
+# Reportes de cobertura
+coverage/
